@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function MainPage() {
   //State for the form fields
@@ -7,17 +8,42 @@ export default function MainPage() {
   const [targetCurrency, setTargetCurrency] = useState("");
   const [amountInSourceCurrency, setAmountInSourceCurrency] = useState(0);
   const [amountInTargetCurrency, setAmountInTargetCurrency] = useState(0);
+  const [currencyNames, setCurrencyNames] = useState([]);
 
   //handleSubmit method
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(
-      date, 
-      sourceCurrency, 
-      targetCurrency, 
-      amountInSourceCurrency
-    );
+    try {
+      const responce = await axios.get("http://localhost:5000/convert", {
+        params: {
+          date,
+          sourceCurrency,
+          targetCurrency,
+          amountInSourceCurrency,
+        },
+      });
+
+      setAmountInTargetCurrency(responce.data);
+      console.log(amountInSourceCurrency, amountInTargetCurrency);
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  //get all currency names
+  useEffect(() => {
+    const getCurrencyNames = async () => {
+      try {
+        const responce = await axios.get(
+          "http://localhost:5000/getAllCurrencies"
+        );
+        setCurrencyNames(responce.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getCurrencyNames();
+  }, []);
 
   return (
     <div>
@@ -71,9 +97,12 @@ export default function MainPage() {
                 required
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               >
-                <option>Select Source Currency 01</option>
-                <option>Select Source Currency 02</option>
-                <option>Select Source Currency 03</option>
+                <option>Select Source Currency</option>
+                {Object.keys(currencyNames).map((currency) => (
+                  <option className="p-1" key={currency} value={currency}>
+                    {currencyNames[currency]}
+                  </option>
+                ))}
               </select>
             </div>
             {/* Target Currency */}
@@ -92,9 +121,12 @@ export default function MainPage() {
                 required
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               >
-                <option>Select Target Currency 01</option>
-                <option>Select Target Currency 02</option>
-                <option>Select Target Currency 03</option>
+                <option>Select Target Currency</option>
+                {Object.keys(currencyNames).map((currency) => (
+                  <option className="p-1" key={currency} value={currency}>
+                    {currencyNames[currency]}
+                  </option>
+                ))}
               </select>
             </div>
             {/* Amount */}
@@ -125,6 +157,18 @@ export default function MainPage() {
           </form>
         </section>
       </div>
+
+      <center>
+        <section className="mt-5 lg:mx-72 text-xl mb-20">
+          {amountInSourceCurrency} {currencyNames[sourceCurrency]} is equals to{" "}
+          <span className="text-blue-500 font-bold">
+            {amountInTargetCurrency}
+          </span>{" "}
+          in {currencyNames[targetCurrency]}
+        </section>
+      </center>
+
+      
     </div>
   );
 }
